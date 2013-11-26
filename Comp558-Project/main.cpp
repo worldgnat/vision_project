@@ -11,13 +11,15 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/stitching/stitcher.hpp"
 #include <opencv2/core/core.hpp>
+#include <mach-o/dyld.h>
 
 using namespace std;
 using namespace cv;
 
 bool try_use_gpu = false;
 vector<Mat> imgs;
-string result_name = "$SRCROOT/images/result.jpg";
+// Replace this with the local location of your Xcode Project
+string result_name = "/Users/nicolaslangley/Development/Xcode Projects/vision_project/images/result.jpg";
 
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
@@ -37,6 +39,8 @@ int main(int argc, char* argv[])
         return -1;
     }
     
+    
+    cout << "Writing image to " << result_name << "\n";
     imwrite(result_name, pano);
     return 0;
 }
