@@ -53,23 +53,45 @@
 \end{frame}
 
 \begin{frame}{Alignment with Bundle Adjustment}
-
+	\begin{itemize}
+		\item Matching homographies would lead to issues
+		\item Not all images would align
+		\item Bundle adjustment [TMHF99] solves this problem
+	\end{itemize}
+	\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Sub.jpg}
+	\end{figure}
 \end{frame}
 
-\begin{frame}{Image Warping}
-
+\begin{frame}{Straightening}
+	\begin{itemize}
+		\item The resulting panorama may not be perfectly level
+		\item Cameras are not perfectly level
+		\item Assume camera is level relative to the horizon
+		\item Straighten so the null space of the covariance of the horizontal axis is up
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{Gain Correction}
 \begin{itemize}
 	\item Modern consumer cameras adjust gain automatically from image to image
 	\item Variation of lighting conditions over an image may necessitate changes in exposure and aperture settings across the panorama
+	\item Minimize the gain normalized intensity error over all overlapping pixels ($\mathcal{R}(i,j)$)
+	\item Solve for the gain parameters $g_i, g_j$.
 \end{itemize}
 \begin{align}
-e = \frac{1}{2} \sum^n_{i=1} \sum^n_{j=1} |\mathcal{R}(i,j)| (\frac{(g_i \bar{I}_{ij} - g_j \bar{I}_{ji})^2}{\sigma_N^2} + \frac{(1-g_i)^2}{\sigma_g^2}\\
+e = \frac{1}{2} \sum^n_{i=1} \sum^n_{j=1} |\mathcal{R}(i,j)| \Big(\frac{(g_i \bar{I}_{ij} - g_j \bar{I}_{ji})^2}{\sigma_N^2} + \frac{(1-g_i)^2}{\sigma_g^2}\Big)\\
 \bar{I}_{ij} = \frac{\sum_{u_i \in \mathcal{R}(i,j)} I_i(u_i)}{\sum_{u_i \in \mathcal{R}(i,j)} 1}
 \end{align}
 
+\end{frame}
+
+\begin{frame}{References}
+\begin{itemize}
+\item W. Triggs, P. McLauchlan, R. Hartley, and A. Fitzgibbon. Bundle adjustment: A modern synthesis. In Vision Algorithms: Theory and Practice, number 1883 in LNCS, pages 298– 373. Springer-Verlag, Corfu, Greece, September 1999.
+\item M. Brown and D. Lowe. Automatic Panorama Stitching using Invariant Features. IJCV, 2007.
+\end{itemize}
 \end{frame}
 
 \end{document}
