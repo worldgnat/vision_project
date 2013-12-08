@@ -1,25 +1,27 @@
 //
 //  main.cpp
-//  Comp558-Project
-//
-//  Created by Nicolas Langley on 11/9/13.
-//  Copyright (c) 2013 Nicolas Langley. All rights reserved.
+//  Comp558 Project
+//  Nicolas Langley & Peter Davoust
 //
 
 #include <iostream>
 #include <fstream>
+#include "opencv2/stitching/detail/matchers.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/flann/flann.hpp"
 #include "opencv2/stitching/stitcher.hpp"
 #include <opencv2/core/core.hpp>
 #include <mach-o/dyld.h>
 
 using namespace std;
+// Namespaces for OpenCV
 using namespace cv;
+using namespace detail;
 
 bool try_use_gpu = false;
 vector<Mat> imgs;
 // Replace this with the local location of your Xcode Project
-string result_name = "/Users/nicolaslangley/Development/Xcode Projects/vision_project/images/result.jpg";
+string result_name = "result.jpg";
 
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
@@ -29,19 +31,38 @@ int main(int argc, char* argv[])
     int retval = parseCmdArgs(argc, argv);
     if (retval) return -1;
     
-    Mat pano;
-    Stitcher stitcher = Stitcher::createDefault(try_use_gpu);
-    Stitcher::Status status = stitcher.stitch(imgs, pano);
-    
-    if (status != Stitcher::OK)
-    {
-        cout << "Can't stitch images, error code = " << status << endl;
-        return -1;
+    // First step is to obtain Image Features
+    // Create feature finder for SURF using OpenCV
+    SurfFeaturesFinder surfFinder = SurfFeaturesFinder();
+    vector<ImageFeatures> imgFeatures;
+    // Obtain features for each image
+    for (int i = 0; i < imgs.size(); i++) {
+        ImageFeatures features;
+        surfFinder(imgs.at(i), features);
+        imgFeatures.push_back(features);
     }
     
+    /* 
+     * Use FLANN to find approximate nearest neighbours [BL97]
+     * In order to find matches, do we need to perform this for each image with every other image?
+     * This could be very inefficient.
+     */
+    int numFeatures = (int) imgFeatures.size();
+    FlannBasedMatcher flann = FlannBasedMatcher();
+    vector<vector<DMatch>> allMatches;
+    for (int i = 0; i < numFeatures; i++) {
+        for (int j = 0; j < numFeatures; j++) {
+            vector<DMatch> curMatches;
+            flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
+            allMatches.push_back(curMatches);
+        }
+    }
     
-    cout << "Writing image to " << result_name << "\n";
-    imwrite(result_name, pano);
+    // Use FindHomography
+    
+    
+    //cout << "Writing image to " << result_name << "\n";
+    //imwrite(result_name, pano);
     return 0;
 }
 
