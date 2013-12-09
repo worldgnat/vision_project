@@ -210,6 +210,8 @@
 					"-lopencv_video",
 					"-lopencv_stitching",
 					"-lopencv_imgproc",
+					"-lopencv_features2d",
+					"-lopencv_flann",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -233,6 +235,8 @@
 					"-lopencv_video",
 					"-lopencv_stitching",
 					"-lopencv_imgproc",
+					"-lopencv_features2d",
+					"-lopencv_flann",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

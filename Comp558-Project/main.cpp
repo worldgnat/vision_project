@@ -8,8 +8,7 @@
 #include <fstream>
 #include "opencv2/stitching/detail/matchers.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include "opencv2/flann/flann.hpp"
-#include "opencv2/stitching/stitcher.hpp"
+#include "opencv2/features2d/features2d.hpp"
 #include <opencv2/core/core.hpp>
 #include <mach-o/dyld.h>
 
@@ -46,6 +45,7 @@ int main(int argc, char* argv[])
      * Use FLANN to find approximate nearest neighbours [BL97]
      * In order to find matches, do we need to perform this for each image with every other image?
      * This could be very inefficient.
+     * Instead only choose look at images with a high number of matching features
      */
     int numFeatures = (int) imgFeatures.size();
     FlannBasedMatcher flann = FlannBasedMatcher();
@@ -54,11 +54,15 @@ int main(int argc, char* argv[])
         for (int j = 0; j < numFeatures; j++) {
             vector<DMatch> curMatches;
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
-            allMatches.push_back(curMatches);
+            // Only consider matches with more than 5 matched features
+            if (curMatches.size() > 5) {
+                allMatches.push_back(curMatches);
+            }
         }
     }
     
     // Use FindHomography
+    
     
     
     //cout << "Writing image to " << result_name << "\n";
