@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
     int numFeatures = (int) imgFeatures.size();
     FlannBasedMatcher flann = FlannBasedMatcher();
     vector<vector<DMatch>> allMatches;
-    for (int i = 0; i < numFeatures; i++) {
-        for (int j = 0; j < numFeatures; j++) {
+    for (int i = 0; i < numFeatures-1; i++) {
+        for (int j = 1; j < numFeatures; j++) {
             vector<DMatch> curMatches;
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
             // Only consider matches with more than 5 matched features
@@ -63,7 +63,19 @@ int main(int argc, char* argv[])
     
     // Use FindHomography
     
+    // Draw matches - Not part of actual pipelin
+    Mat img1 = imgs.at(0);
+    Mat img2 = imgs.at(1);
+    vector<KeyPoint> keypoints1 = imgFeatures.at(0).keypoints;
+    vector<KeyPoint> keypoints2 = imgFeatures.at(1).keypoints;
+    vector<DMatch> matches = allMatches.at(0);
+    Mat matchesToShow;
+    drawMatches( img1, keypoints1, img2, keypoints2,
+                matches, matchesToShow, Scalar::all(-1), Scalar::all(-1),
+                vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
     
+    //-- Show detected matches
+    imwrite(result_name, matchesToShow);
     
     //cout << "Writing image to " << result_name << "\n";
     //imwrite(result_name, pano);
