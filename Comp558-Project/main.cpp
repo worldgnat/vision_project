@@ -25,8 +25,7 @@ string result_name = "result.jpg";
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     int retval = parseCmdArgs(argc, argv);
     if (retval) return -1;
     
@@ -83,8 +82,7 @@ int main(int argc, char* argv[])
 }
 
 
-void printUsage()
-{
+void printUsage() {
     cout <<
     "Rotation model images stitcher.\n\n"
     "stitching img1 img2 [...imgN]\n\n"
@@ -97,43 +95,36 @@ void printUsage()
 }
 
 
-int parseCmdArgs(int argc, char** argv)
-{
-    if (argc == 1)
-    {
+int parseCmdArgs(int argc, char** argv) {
+    // Check that there it at least one argument - if not print usage
+    if (argc == 1) {
         printUsage();
         return -1;
     }
-    for (int i = 1; i < argc; ++i)
-    {
-        if (string(argv[i]) == "--help" || string(argv[i]) == "/?")
-        {
+    // Iterate through arguments
+    for (int i = 1; i < argc; ++i) {
+        // Handle case that argument is --help or /?
+        if (string(argv[i]) == "--help" || string(argv[i]) == "/?") {
             printUsage();
             return -1;
-        }
-        else if (string(argv[i]) == "--try_gpu")
-        {
-            if (string(argv[i + 1]) == "no")
-                try_use_gpu = false;
-            else if (string(argv[i + 1]) == "yes")
-                try_use_gpu = true;
-            else
-            {
+        } else if (string(argv[i]) == "--try_gpu") {
+            // Handle --try_gpu flag
+            if (string(argv[i + 1]) == "no") try_use_gpu = false;
+            else if (string(argv[i + 1]) == "yes") try_use_gpu = true;
+            else {
                 cout << "Bad --try_use_gpu flag value\n";
                 return -1;
             }
             i++;
         }
-        else if (string(argv[i]) == "--output")
-        {
+        // Handle --output flag
+        else if (string(argv[i]) == "--output") {
             result_name = argv[i + 1];
             i++;
-        }
-        else
-        {
+        } else {
+            // Read input images into imgs
             Mat img = imread(argv[i]);
-            if (img.empty())
-            {
+            if (img.empty()) {
                 cout << "Can't read image '" << argv[i] << "'\n";
                 return -1;
             }
