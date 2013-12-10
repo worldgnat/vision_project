@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <vector>
 #include "opencv2/stitching/detail/matchers.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
@@ -28,6 +30,7 @@ int parseCmdArgs(int argc, char** argv);
 bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b);
 
 int main(int argc, char* argv[]) {
+    // Handle command line arguments
     int retval = parseCmdArgs(argc, argv);
     if (retval) return -1;
     
@@ -49,9 +52,12 @@ int main(int argc, char* argv[]) {
      * Instead only choose look at images with a high number of matching features
      */
     int numFeatures = (int) imgFeatures.size();
+    // Initialize FLANN matcher
     FlannBasedMatcher flann = FlannBasedMatcher();
+    
     typedef vector<vector<DMatch>> MatchSet;
     vector<MatchSet> allMatches;
+    // Iterate through all image pairs
     for (int i = 0; i < numFeatures-1; i++) {
         MatchSet curMatchSet;
         for (int j = 1; j < numFeatures; j++) {
@@ -60,20 +66,50 @@ int main(int argc, char* argv[]) {
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
             curMatchSet.push_back(curMatches);
         }
-        //
+        // Sort image matches based on number of features and only keep top m = 6
         sort(curMatchSet.begin(), curMatchSet.end(), vectorComp);
         while (curMatchSet.size() > 6) curMatchSet.pop_back();
+        allMatches.push_back(curMatchSet);
     }
     
-    // Use FindHomography
-    // Convert from vector<dMatch> to vector<Point2f>
-    // calib3d.FindHomography()
-    // Mat findHomography(InputArray srcPoints, InputArray dstPoints, int method=0, double ransacReprojThreshold=3, OutputArray mask=noArray())
-    vector<vector<Mat>> allHomographies;
-    Mat homography;
-    Mat ransac_mask;
-    vector<Point2f> srcPoints, dstPoints;
-    homography = findHomography(srcPoints, dstPoints, CV_RANSAC, 5, ransac_mask);
+    
+    // Typedefs
+    typedef vector<Mat> HomographySet;
+    typedef vector<Mat> MaskSet;
+    
+    // Create lists of all homographis and inlier/outlier masks
+    // Mask values - 0 = outlier value = inlier
+    vector<HomographySet> allHomographies;
+    vector<MaskSet> allMasks;
+    
+    // Iterate through all pairs of images
+    for (int i = 0; i < allMatches.size()-1; i++) {
+        HomographySet curHomographySet;
+        MaskSet curMaskSet;
+        for (int j = 1; j < allMatches.at(i).size(); j++) {
+            // Get keypoints for each set of images
+            vector<Point2f> obj;
+            vector<Point2f> scene;
+            for (int k = 0; k < allMatches.at(i).at(j).size(); k++) {
+                int qIndex = allMatches.at(i).at(j).at(k).queryIdx;
+                int tIndex = allMatches.at(i).at(j).at(k).trainIdx;
+                obj.push_back(imgFeatures.at(i).keypoints[qIndex].pt);
+                scene.push_back(imgFeatures.at(j).keypoints[tIndex].pt);
+            }
+            // Compute Homography and inlier/outlier mask
+            Mat curMask;
+            Mat H = findHomography(obj, scene, CV_RANSAC, 5, curMask);
+            curHomographySet.push_back(H);
+            curMask.push_back(curMask);
+        }
+        allHomographies.push_back(curHomographySet);
+        allMasks.push_back(curMaskSet);
+    }
+    
+    // TODO: Check that homography for each pair of images is valid
+    // n_i > alpha + beta* n_f where alpha = 8.0, beta = 0.3, n_f = # features in overlap, n_i = # inliers
+    
+    
     
     /*
     // Draw matches - Not part of actual pipeline
