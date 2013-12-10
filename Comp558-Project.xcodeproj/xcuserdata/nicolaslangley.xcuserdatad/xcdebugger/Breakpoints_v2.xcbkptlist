@@ -6,44 +6,44 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Comp558-Project/main.cpp"
-            timestampString = "408401447.234312"
+            timestampString = "408404817.228035"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "58"
-            endingLineNumber = "58"
+            startingLineNumber = "59"
+            endingLineNumber = "59"
             landmarkName = "main(int argc, char* argv[])"
             landmarkType = "7">
             <Locations>
                <Location
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "main"
                   moduleName = "Comp558-Project"
                   urlString = "file:///Users/nicolaslangley/Dropbox/McGill/Fall%202013/Comp%20558/Project/vision_project/Comp558-Project/main.cpp"
-                  timestampString = "408401447.246309"
+                  timestampString = "408404817.24916"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "61"
-                  endingLineNumber = "61"
+                  startingLineNumber = "62"
+                  endingLineNumber = "62"
                   offsetFromSymbolStart = "1573">
                </Location>
                <Location
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "main"
                   moduleName = "Comp558-Project"
                   urlString = "file:///Users/nicolaslangley/Dropbox/McGill/Fall%202013/Comp%20558/Project/vision_project/Comp558-Project/main.cpp"
-                  timestampString = "408401447.246511"
+                  timestampString = "408404817.249362"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "61"
-                  endingLineNumber = "61"
+                  startingLineNumber = "62"
+                  endingLineNumber = "62"
                   offsetFromSymbolStart = "4142">
                </Location>
             </Locations>
@@ -52,59 +52,59 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Comp558-Project/main.cpp"
-            timestampString = "408401458.795481"
+            timestampString = "408404817.228035"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "83"
-            endingLineNumber = "83"
+            startingLineNumber = "84"
+            endingLineNumber = "84"
             landmarkName = "main(int argc, char* argv[])"
             landmarkType = "7">
             <Locations>
                <Location
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "main"
                   moduleName = "Comp558-Project"
                   urlString = "file:///Users/nicolaslangley/Dropbox/McGill/Fall%202013/Comp%20558/Project/vision_project/Comp558-Project/main.cpp"
-                  timestampString = "408401458.797582"
+                  timestampString = "408404817.249542"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "86"
-                  endingLineNumber = "86"
+                  startingLineNumber = "87"
+                  endingLineNumber = "87"
                   offsetFromSymbolStart = "4613">
                </Location>
                <Location
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "main"
                   moduleName = "Comp558-Project"
                   urlString = "file:///Users/nicolaslangley/Dropbox/McGill/Fall%202013/Comp%20558/Project/vision_project/Comp558-Project/main.cpp"
-                  timestampString = "408401458.797887"
+                  timestampString = "408404817.249779"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "86"
-                  endingLineNumber = "86"
+                  startingLineNumber = "87"
+                  endingLineNumber = "87"
                   offsetFromSymbolStart = "4679">
                </Location>
                <Location
-                  shouldBeEnabled = "Yes"
+                  shouldBeEnabled = "No"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "main"
                   moduleName = "Comp558-Project"
                   urlString = "file:///Users/nicolaslangley/Dropbox/McGill/Fall%202013/Comp%20558/Project/vision_project/Comp558-Project/main.cpp"
-                  timestampString = "408401458.798121"
+                  timestampString = "408404817.250102"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "86"
-                  endingLineNumber = "86"
-                  offsetFromSymbolStart = "8892">
+                  startingLineNumber = "87"
+                  endingLineNumber = "87"
+                  offsetFromSymbolStart = "8899">
                </Location>
             </Locations>
          </BreakpointContent>

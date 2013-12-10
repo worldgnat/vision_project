@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
     // Initialize FLANN matcher
     FlannBasedMatcher flann = FlannBasedMatcher();
     
+    // Typedef for sets of matches
     typedef vector<vector<DMatch>> MatchSet;
     vector<MatchSet> allMatches;
     // Iterate through all image pairs
@@ -108,7 +109,32 @@ int main(int argc, char* argv[]) {
     
     // TODO: Check that homography for each pair of images is valid
     // n_i > alpha + beta* n_f where alpha = 8.0, beta = 0.3, n_f = # features in overlap, n_i = # inliers
-    
+    // Iterate through images and remove all matches that do not pass above condition
+    double alpha = 8.0;
+    double beta = 0.3;
+    for (int i = 0; i < allMasks.size(); i++) {
+        for (int j = 0; j < allMasks.at(i).size(); j++) {
+            // Compute validity of homography
+            int numInliers = 0;
+            Mat inliers = allMasks.at(i).at(j);
+            for(int row = 0; row < inliers.rows; ++row) {
+                uchar* p = inliers.ptr(row);
+                for(int col = 0; col < inliers.cols; ++col) {
+                    if (*p != 0) {
+                        numInliers++;
+                    }
+                    *p++;
+                }
+            }
+            int numFeatures = (int) allMatches.at(i).at(j).size();
+            bool isGoodMatch = false;
+            if ((double) numInliers > (alpha + beta * (double) numFeatures)) {
+                isGoodMatch = true;
+                cout << "Good match occured at " << i << ", " << j;
+                // Put image into list
+            }
+        }
+    }
     
     
     /*
