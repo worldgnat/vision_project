@@ -101,13 +101,13 @@ int main(int argc, char* argv[]) {
             Mat curMask;
             Mat H = findHomography(obj, scene, CV_RANSAC, 5, curMask);
             curHomographySet.push_back(H);
-            curMask.push_back(curMask);
+            curMaskSet.push_back(curMask);
         }
         allHomographies.push_back(curHomographySet);
         allMasks.push_back(curMaskSet);
     }
     
-    // TODO: Check that homography for each pair of images is valid
+    // Check that homography for each pair of images is valid
     // n_i > alpha + beta* n_f where alpha = 8.0, beta = 0.3, n_f = # features in overlap, n_i = # inliers
     // Iterate through images and remove all matches that do not pass above condition
     double alpha = 8.0;
@@ -128,9 +128,10 @@ int main(int argc, char* argv[]) {
             }
             int numFeatures = (int) allMatches.at(i).at(j).size();
             bool isGoodMatch = false;
+            cout << "Num inliers " << numInliers << " Num features " << numFeatures << endl;
             if ((double) numInliers > (alpha + beta * (double) numFeatures)) {
                 isGoodMatch = true;
-                cout << "Good match occured at " << i << ", " << j;
+                cout << "Good match occured at " << i << ", " << j << endl;
                 // Put image into list
             }
         }
