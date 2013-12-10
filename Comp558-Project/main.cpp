@@ -8,6 +8,7 @@
 #include <fstream>
 #include "opencv2/stitching/detail/matchers.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include <opencv2/core/core.hpp>
 #include <mach-o/dyld.h>
@@ -24,6 +25,7 @@ string result_name = "result.jpg";
 
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
+bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b);
 
 int main(int argc, char* argv[]) {
     int retval = parseCmdArgs(argc, argv);
@@ -48,21 +50,33 @@ int main(int argc, char* argv[]) {
      */
     int numFeatures = (int) imgFeatures.size();
     FlannBasedMatcher flann = FlannBasedMatcher();
-    vector<vector<DMatch>> allMatches;
+    typedef vector<vector<DMatch>> MatchSet;
+    vector<MatchSet> allMatches;
     for (int i = 0; i < numFeatures-1; i++) {
+        MatchSet curMatchSet;
         for (int j = 1; j < numFeatures; j++) {
+            // Add matches for each image to current match set
             vector<DMatch> curMatches;
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
-            // Only consider matches with more than 5 matched features
-            if (curMatches.size() > 5) {
-                allMatches.push_back(curMatches);
-            }
+            curMatchSet.push_back(curMatches);
         }
+        //
+        sort(curMatchSet.begin(), curMatchSet.end(), vectorComp);
+        while (curMatchSet.size() > 6) curMatchSet.pop_back();
     }
     
     // Use FindHomography
+    // Convert from vector<dMatch> to vector<Point2f>
+    // calib3d.FindHomography()
+    // Mat findHomography(InputArray srcPoints, InputArray dstPoints, int method=0, double ransacReprojThreshold=3, OutputArray mask=noArray())
+    vector<vector<Mat>> allHomographies;
+    Mat homography;
+    Mat ransac_mask;
+    vector<Point2f> srcPoints, dstPoints;
+    homography = findHomography(srcPoints, dstPoints, CV_RANSAC, 5, ransac_mask);
     
-    // Draw matches - Not part of actual pipelin
+    /*
+    // Draw matches - Not part of actual pipeline
     Mat img1 = imgs.at(0);
     Mat img2 = imgs.at(1);
     vector<KeyPoint> keypoints1 = imgFeatures.at(0).keypoints;
@@ -75,10 +89,15 @@ int main(int argc, char* argv[]) {
     
     //-- Show detected matches
     imwrite(result_name, matchesToShow);
+    */
     
     //cout << "Writing image to " << result_name << "\n";
     //imwrite(result_name, pano);
     return 0;
+}
+
+bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b) {
+    return a.size() < b.size();
 }
 
 
