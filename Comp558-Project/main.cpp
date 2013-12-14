@@ -1,18 +1,25 @@
+
 //
 //  main.cpp
 //  Comp558 Project
 //  Nicolas Langley & Peter Davoust
 //
 
+// System Includes
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <map>
+
+// OpenCV Includes
 #include "opencv2/stitching/detail/matchers.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include <opencv2/core/core.hpp>
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/nonfree/nonfree.hpp"
 #include <mach-o/dyld.h>
 
 using namespace std;
@@ -28,15 +35,18 @@ string result_name = "result.jpg";
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
 bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b);
+void featureDetectionTest();
 
 int main(int argc, char* argv[]) {
     // Handle command line arguments
     int retval = parseCmdArgs(argc, argv);
     if (retval) return -1;
     
+    //featureDetectionTest();
+    
     // First step is to obtain Image Features
     // Create feature finder for SURF using OpenCV
-    SurfFeaturesFinder surfFinder = SurfFeaturesFinder();
+    SurfFeaturesFinder surfFinder = SurfFeaturesFinder(650.);
     vector<ImageFeatures> imgFeatures;
     // Obtain features for each image
     for (int i = 0; i < imgs.size(); i++) {
@@ -44,6 +54,7 @@ int main(int argc, char* argv[]) {
         surfFinder(imgs.at(i), features);
         imgFeatures.push_back(features);
     }
+    cout << imgFeatures.at(0).descriptors.rows << " " << imgFeatures.at(1).descriptors.rows << endl;
     
     /* 
      * Use FLANN to find approximate nearest neighbours [BL97]
@@ -56,6 +67,7 @@ int main(int argc, char* argv[]) {
     FlannBasedMatcher flann = FlannBasedMatcher();
     
     // Typedef for sets of matches
+    map<vector<DMatch>, int> matchToImage;
     typedef vector<vector<DMatch>> MatchSet;
     vector<MatchSet> allMatches;
     // Iterate through all image pairs
@@ -65,11 +77,37 @@ int main(int argc, char* argv[]) {
             // Add matches for each image to current match set
             vector<DMatch> curMatches;
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
-            curMatchSet.push_back(curMatches);
+            // Only choose matches that are considered valid
+            vector<DMatch> curGoodMatches;
+            double max_dist = 0;
+            double min_dist = 100;
+            
+            //-- Quick calculation of max and min distances between keypoints
+            for (int k = 0; k < imgFeatures.at(i).descriptors.rows; k++) {
+                double dist = curMatches[k].distance;
+                if (dist < min_dist) min_dist = dist;
+                if (dist > max_dist) max_dist = dist;
+            }
+            
+            //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist )
+            std::vector< DMatch > good_matches;
+            
+            for (int k = 0; k < imgFeatures.at(i).descriptors.rows; k++) {
+                if (curMatches[k].distance <= 2 * min_dist ) {
+                    curGoodMatches.push_back(curMatches[i]);
+                }
+            }
+            cout << "Number of matches method 2 " << curGoodMatches.size() << endl;
+            matchToImage[curGoodMatches] = j;
+            curMatchSet.push_back(curGoodMatches);
         }
         // Sort image matches based on number of features and only keep top m = 6
         sort(curMatchSet.begin(), curMatchSet.end(), vectorComp);
-        while (curMatchSet.size() > 6) curMatchSet.pop_back();
+        while (curMatchSet.size() > 6) {
+            vector<DMatch> last = curMatchSet.back();
+            curMatchSet.pop_back();
+            matchToImage.erase(last);
+        }
         allMatches.push_back(curMatchSet);
     }
     
@@ -84,10 +122,10 @@ int main(int argc, char* argv[]) {
     vector<MaskSet> allMasks;
     
     // Iterate through all pairs of images
-    for (int i = 0; i < allMatches.size()-1; i++) {
+    for (int i = 0; i < allMatches.size(); i++) {
         HomographySet curHomographySet;
         MaskSet curMaskSet;
-        for (int j = 1; j < allMatches.at(i).size(); j++) {
+        for (int j = 0; j < allMatches.at(i).size(); j++) {
             // Get keypoints for each set of images
             vector<Point2f> obj;
             vector<Point2f> scene;
@@ -99,9 +137,12 @@ int main(int argc, char* argv[]) {
             }
             // Compute Homography and inlier/outlier mask
             Mat curMask;
-            Mat H = findHomography(obj, scene, CV_RANSAC, 5, curMask);
-            curHomographySet.push_back(H);
-            curMaskSet.push_back(curMask);
+            cout << "Object " << obj.size() << " Scene " << scene.size() << endl;
+            if (obj.size() >= 4 && scene.size() >= 4) {
+                Mat H = findHomography(obj, scene, CV_RANSAC, 5, curMask);
+                curHomographySet.push_back(H);
+                curMaskSet.push_back(curMask);
+            }
         }
         allHomographies.push_back(curHomographySet);
         allMasks.push_back(curMaskSet);
@@ -112,22 +153,27 @@ int main(int argc, char* argv[]) {
     // Iterate through images and remove all matches that do not pass above condition
     double alpha = 8.0;
     double beta = 0.3;
+    int count = 0;
+    vector<int> imageOrder;
     for (int i = 0; i < allMasks.size(); i++) {
         for (int j = 0; j < allMasks.at(i).size(); j++) {
             // Compute validity of homography
             int numInliers = 0;
             Mat inliers = allMasks.at(i).at(j);
             for(int row = 0; row < inliers.rows; ++row) {
+                //
                 uchar* p = inliers.ptr(row);
                 for(int col = 0; col < inliers.cols; ++col) {
                     if (*p != 0) {
                         numInliers++;
                     }
                     *p++;
+                    count++;
                 }
             }
             int numFeatures = (int) allMatches.at(i).at(j).size();
             bool isGoodMatch = false;
+            cout << "Checking... " << i << ", " << j << endl;
             cout << "Num inliers " << numInliers << " Num features " << numFeatures << endl;
             if ((double) numInliers > (alpha + beta * (double) numFeatures)) {
                 isGoodMatch = true;
@@ -163,9 +209,9 @@ bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b) {
     return a.size() < b.size();
 }
 
-
 void printUsage() {
     cout <<
+    
     "Rotation model images stitcher.\n\n"
     "stitching img1 img2 [...imgN]\n\n"
     "Flags:\n"

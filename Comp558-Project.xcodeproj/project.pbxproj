@@ -213,6 +213,7 @@
 					"-lopencv_features2d",
 					"-lopencv_flann",
 					"-lopencv_calib3d",
+					"-lopencv_nonfree",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -239,6 +240,7 @@
 					"-lopencv_features2d",
 					"-lopencv_flann",
 					"-lopencv_calib3d",
+					"-lopencv_nonfree",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
