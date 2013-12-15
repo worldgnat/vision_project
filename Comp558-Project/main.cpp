@@ -14,6 +14,7 @@
 
 // OpenCV Includes
 #include "opencv2/stitching/detail/matchers.hpp"
+#include "opencv2/stitching/stitcher.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/features2d/features2d.hpp"
@@ -42,8 +43,6 @@ int main(int argc, char* argv[]) {
     int retval = parseCmdArgs(argc, argv);
     if (retval) return -1;
     
-    //featureDetectionTest();
-    
     // First step is to obtain Image Features
     // Create feature finder for SURF using OpenCV
     SurfFeaturesFinder surfFinder = SurfFeaturesFinder(650.);
@@ -62,7 +61,7 @@ int main(int argc, char* argv[]) {
      * This could be very inefficient.
      * Instead only choose look at images with a high number of matching features
      */
-    int numFeatures = (int) imgFeatures.size();
+    int numImages = (int) imgFeatures.size();
     // Initialize FLANN matcher
     FlannBasedMatcher flann = FlannBasedMatcher();
     
@@ -71,9 +70,10 @@ int main(int argc, char* argv[]) {
     typedef vector<vector<DMatch>> MatchSet;
     vector<MatchSet> allMatches;
     // Iterate through all image pairs
-    for (int i = 0; i < numFeatures-1; i++) {
+    for (int i = 0; i < numImages; i++) {
         MatchSet curMatchSet;
-        for (int j = 1; j < numFeatures; j++) {
+        for (int j = 0; j < numImages; j++) {
+            //if (j == 1) continue;
             // Add matches for each image to current match set
             vector<DMatch> curMatches;
             flann.match(imgFeatures.at(i).descriptors, imgFeatures.at(j).descriptors, curMatches);
@@ -82,22 +82,21 @@ int main(int argc, char* argv[]) {
             double max_dist = 0;
             double min_dist = 100;
             
-            //-- Quick calculation of max and min distances between keypoints
+            // Quick calculation of max and min distances between keypoints
             for (int k = 0; k < imgFeatures.at(i).descriptors.rows; k++) {
                 double dist = curMatches[k].distance;
                 if (dist < min_dist) min_dist = dist;
                 if (dist > max_dist) max_dist = dist;
             }
             
-            //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist )
-            std::vector< DMatch > good_matches;
+            // Draw only "good" matches (i.e. whose distance is less than 2*min_dist )
+            vector< DMatch > good_matches;
             
             for (int k = 0; k < imgFeatures.at(i).descriptors.rows; k++) {
                 if (curMatches[k].distance <= 2 * min_dist ) {
-                    curGoodMatches.push_back(curMatches[i]);
+                    curGoodMatches.push_back(curMatches[k]);
                 }
             }
-            cout << "Number of matches method 2 " << curGoodMatches.size() << endl;
             matchToImage[curGoodMatches] = j;
             curMatchSet.push_back(curGoodMatches);
         }
@@ -116,7 +115,7 @@ int main(int argc, char* argv[]) {
     typedef vector<Mat> HomographySet;
     typedef vector<Mat> MaskSet;
     
-    // Create lists of all homographis and inlier/outlier masks
+    // Create lists of all homographies and inlier/outlier masks
     // Mask values - 0 = outlier value = inlier
     vector<HomographySet> allHomographies;
     vector<MaskSet> allMasks;
@@ -129,19 +128,23 @@ int main(int argc, char* argv[]) {
             // Get keypoints for each set of images
             vector<Point2f> obj;
             vector<Point2f> scene;
-            for (int k = 0; k < allMatches.at(i).at(j).size(); k++) {
-                int qIndex = allMatches.at(i).at(j).at(k).queryIdx;
-                int tIndex = allMatches.at(i).at(j).at(k).trainIdx;
+            vector<DMatch> curMatches = allMatches.at(i).at(j);
+            for (int k = 0; k < curMatches.size(); k++) {
+                int qIndex = curMatches.at(k).queryIdx;
+                int tIndex = curMatches.at(k).trainIdx;
                 obj.push_back(imgFeatures.at(i).keypoints[qIndex].pt);
                 scene.push_back(imgFeatures.at(j).keypoints[tIndex].pt);
             }
+            
             // Compute Homography and inlier/outlier mask
             Mat curMask;
             cout << "Object " << obj.size() << " Scene " << scene.size() << endl;
             if (obj.size() >= 4 && scene.size() >= 4) {
-                Mat H = findHomography(obj, scene, CV_RANSAC, 5, curMask);
+                Mat H = findHomography(obj, scene, CV_RANSAC, 10, curMask);
                 curHomographySet.push_back(H);
                 curMaskSet.push_back(curMask);
+                //cout << "Homography: " << endl << H << endl;
+                //cout << "Cur Mask: " << endl << curMask << endl;
             }
         }
         allHomographies.push_back(curHomographySet);
@@ -153,52 +156,49 @@ int main(int argc, char* argv[]) {
     // Iterate through images and remove all matches that do not pass above condition
     double alpha = 8.0;
     double beta = 0.3;
-    int count = 0;
     vector<int> imageOrder;
     for (int i = 0; i < allMasks.size(); i++) {
         for (int j = 0; j < allMasks.at(i).size(); j++) {
             // Compute validity of homography
             int numInliers = 0;
+            int numOutliers = 0;
             Mat inliers = allMasks.at(i).at(j);
             for(int row = 0; row < inliers.rows; ++row) {
-                //
                 uchar* p = inliers.ptr(row);
                 for(int col = 0; col < inliers.cols; ++col) {
-                    if (*p != 0) {
+                    int pt = (int) *p;
+                    if (pt == 0) {
                         numInliers++;
+                    } else {
+                        numOutliers++;
                     }
                     *p++;
-                    count++;
                 }
             }
-            int numFeatures = (int) allMatches.at(i).at(j).size();
             bool isGoodMatch = false;
             cout << "Checking... " << i << ", " << j << endl;
-            cout << "Num inliers " << numInliers << " Num features " << numFeatures << endl;
-            if ((double) numInliers > (alpha + beta * (double) numFeatures)) {
+            cout << "Num inliers " << numInliers << " Num outliers " << numOutliers << endl;
+            if ((double) numInliers > (alpha + beta * (double) numOutliers)) {
                 isGoodMatch = true;
                 cout << "Good match occured at " << i << ", " << j << endl;
-                // Put image into list
+                if (find(imageOrder.begin(), imageOrder.end(), i) == imageOrder.end()) imageOrder.push_back(i);
+                if (find(imageOrder.begin(), imageOrder.end(), j) == imageOrder.end()) imageOrder.push_back(j);
             }
         }
     }
+    vector<Mat> orderedImgs;
+    for (int i = 0; i < imageOrder.size(); i++) {
+        orderedImgs.push_back(imgs.at(imageOrder.at(i)));
+    }
     
+    // Use OpenCV Stitching Library to Compose Panorama
+    Mat pano;
+    Stitcher stitch = Stitcher::createDefault(false);
+    // Estimate transform using stitching but don't use it - required for ComposePanorama
+    stitch.estimateTransform(imgs);
+    stitch.composePanorama(orderedImgs, pano);
     
-    /*
-    // Draw matches - Not part of actual pipeline
-    Mat img1 = imgs.at(0);
-    Mat img2 = imgs.at(1);
-    vector<KeyPoint> keypoints1 = imgFeatures.at(0).keypoints;
-    vector<KeyPoint> keypoints2 = imgFeatures.at(1).keypoints;
-    vector<DMatch> matches = allMatches.at(0);
-    Mat matchesToShow;
-    drawMatches( img1, keypoints1, img2, keypoints2,
-                matches, matchesToShow, Scalar::all(-1), Scalar::all(-1),
-                vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-    
-    //-- Show detected matches
-    imwrite(result_name, matchesToShow);
-    */
+    imshow("Stitching Lib", pano);
     
     //cout << "Writing image to " << result_name << "\n";
     //imwrite(result_name, pano);
