@@ -177,8 +177,6 @@ int main(int argc, char* argv[]) {
                 }
             }
             bool isGoodMatch = false;
-            cout << "Checking... " << i << ", " << j << endl;
-            cout << "Num inliers " << numInliers << " Num outliers " << numOutliers << endl;
             if ((double) numInliers > (alpha + beta * (double) numOutliers)) {
                 isGoodMatch = true;
                 cout << "Good match occured at " << i << ", " << j << endl;
@@ -193,6 +191,9 @@ int main(int argc, char* argv[]) {
         orderedImgs.push_back(imgs.at(imageOrder.at(i)));
         if (i < imageOrder.size() - 1) orderedHomographies.push_back(allHomographies.at(i).at(i+1));
     }
+    
+    imshow("T1", imgs.at(0));
+    imshow("T2", imgs.at(1));
     
     Mat pano = imgs.at(0);
     for (int i = 0; i < orderedImgs.size() - 1; i++) {

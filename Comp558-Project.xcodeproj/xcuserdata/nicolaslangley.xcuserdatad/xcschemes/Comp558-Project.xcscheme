@@ -60,30 +60,38 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2599.JPG"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/images/stitch1.JPG"
             isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/images/stitch2.JPG"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2601.JPG"
-            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2600.JPG"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;$SRCROOT&quot;/Stitch/boat1.jpg"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;$SRCROOT&quot;/Stitch/boat2.jpg"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2571.JPG"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2572.JPG"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2602.JPG"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2603.JPG"
+            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2604.JPG"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2605.JPG"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
