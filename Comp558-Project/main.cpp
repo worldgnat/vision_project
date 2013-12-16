@@ -196,14 +196,10 @@ int main(int argc, char* argv[]) {
     
     Mat pano;
     for (int i = 0; i < orderedImgs.size() - 1; i++) {
-        pano = composeImages(imgs.at(i+1), imgs.at(i));
+        pano = composeImages(imgs.at(i+1), imgs.at(i), false, false);
         imshow("Stitch", pano);
         imwrite(result_name, pano);
     }
-    
-    
-    cout << "Writing image to " << result_name << endl;
-    imwrite(result_name, pano);
     
     return 0;
 }
@@ -267,7 +263,7 @@ int parseCmdArgs(int argc, char** argv) {
 }
 
 // Function that takes 2 image and composes them - used for after order has been found.
-Mat composeImages(Mat image1, Mat image2, bool displayMatches = false, bool displayFeatures = false) {
+Mat composeImages(Mat image1, Mat image2, bool displayMatches, bool displayFeatures) {
     
     // Load the images
     Mat gray_image1;

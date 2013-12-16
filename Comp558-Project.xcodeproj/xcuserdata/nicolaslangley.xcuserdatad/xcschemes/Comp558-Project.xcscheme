@@ -72,7 +72,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2601.JPG"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2600.JPG"
@@ -87,11 +87,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2604.JPG"
+            argument = "&quot;$SRCROOT&quot;/Stitch/img1.jpg"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "&quot;$SRCROOT&quot;/Stitch/IMG_2605.JPG"
+            argument = "&quot;$SRCROOT&quot;/Stitch/img2.jpg"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
