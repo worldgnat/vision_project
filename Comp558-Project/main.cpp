@@ -31,12 +31,13 @@ using namespace detail;
 bool try_use_gpu = false;
 vector<Mat> imgs;
 // Replace this with the local location of your Xcode Project
-string result_name = "result.jpg";
+string result_name = "/Users/nicolaslangley/Desktop/result.jpg";
 
 void printUsage();
 int parseCmdArgs(int argc, char** argv);
 bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b);
 void featureDetectionTest();
+Mat composeImages(Mat image1, Mat image2, bool displayMatches = false, bool displayFeatures = false);
 
 int main(int argc, char* argv[]) {
     // Handle command line arguments
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
         surfFinder(imgs.at(i), features);
         imgFeatures.push_back(features);
     }
-    cout << imgFeatures.at(0).descriptors.rows << " " << imgFeatures.at(1).descriptors.rows << endl;
+//    cout << imgFeatures.at(0).descriptors.rows << " " << imgFeatures.at(1).descriptors.rows << endl;
     
     /* 
      * Use FLANN to find approximate nearest neighbours [BL97]
@@ -187,24 +188,27 @@ int main(int argc, char* argv[]) {
         }
     }
     vector<Mat> orderedImgs;
+    vector<Mat> orderedHomographies;
     for (int i = 0; i < imageOrder.size(); i++) {
         orderedImgs.push_back(imgs.at(imageOrder.at(i)));
+        if (i < imageOrder.size() - 1) orderedHomographies.push_back(allHomographies.at(i).at(i+1));
     }
     
-    // Use OpenCV Stitching Library to Compose Panorama
     Mat pano;
-    Stitcher stitch = Stitcher::createDefault(false);
-    // Estimate transform using stitching but don't use it - required for ComposePanorama
-    stitch.estimateTransform(imgs);
-    stitch.composePanorama(orderedImgs, pano);
+    for (int i = 0; i < orderedImgs.size() - 1; i++) {
+        pano = composeImages(imgs.at(i+1), imgs.at(i));
+        imshow("Stitch", pano);
+        imwrite(result_name, pano);
+    }
     
-    imshow("Stitching Lib", pano);
     
-    //cout << "Writing image to " << result_name << "\n";
-    //imwrite(result_name, pano);
+    cout << "Writing image to " << result_name << endl;
+    imwrite(result_name, pano);
+    
     return 0;
 }
 
+// Function for comparing size of two vectors - used in sorting
 bool vectorComp(const vector<DMatch>& a,const vector<DMatch>& b) {
     return a.size() < b.size();
 }
@@ -261,4 +265,100 @@ int parseCmdArgs(int argc, char** argv) {
     }
     return 0;
 }
+
+// Function that takes 2 image and composes them - used for after order has been found.
+Mat composeImages(Mat image1, Mat image2, bool displayMatches = false, bool displayFeatures = false) {
+    
+    // Load the images
+    Mat gray_image1;
+    Mat gray_image2;
+    // Convert to Grayscale
+    cvtColor( image1, gray_image1, CV_RGB2GRAY );
+    cvtColor( image2, gray_image2, CV_RGB2GRAY );
+    
+    if( !gray_image1.data || !gray_image2.data )
+    { std::cout<< " --(!) Error reading images " << std::endl;}
+    
+    // First step is to obtain Image Features
+    // Create feature finder for SURF using OpenCV
+    SurfFeaturesFinder surfFinder = SurfFeaturesFinder(650.);
+    ImageFeatures imScene, imObject;
+    surfFinder(gray_image1, imObject);
+    surfFinder(gray_image2, imScene);
+    Mat descriptors_object, descriptors_scene;
+    descriptors_object = imObject.descriptors;
+    descriptors_scene = imScene.descriptors;
+    vector<KeyPoint> keypoints_object, keypoints_scene;
+    keypoints_object = imObject.keypoints;
+    keypoints_scene = imScene.keypoints;
+    
+    if (displayFeatures == true) {
+    
+        Mat img_keypoints_1; Mat img_keypoints_2;
+        drawKeypoints( image1, keypoints_object, img_keypoints_1, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+        drawKeypoints( image2, keypoints_scene, img_keypoints_2, Scalar::all(-1), DrawMatchesFlags::DEFAULT );
+    
+        // Draw keypoints
+        imwrite("/Users/nicolaslangley/Desktop/keypts1.jpg", img_keypoints_1 );
+        imwrite("/Users/nicolaslangley/Desktop/keypts2.jpg", img_keypoints_2 );
+    }
+    
+    FlannBasedMatcher flann;
+    vector<DMatch> matches;
+    flann.match(descriptors_object, descriptors_scene, matches);
+    // Only choose matches that are considered valid
+    vector<DMatch> goodMatches;
+    double max_dist = 0;
+    double min_dist = 100;
+    
+    // Quick calculation of max and min distances between keypoints
+    for (int k = 0; k < descriptors_object.rows; k++) {
+        double dist = matches[k].distance;
+        if (dist < min_dist) min_dist = dist;
+        if (dist > max_dist) max_dist = dist;
+    }
+    
+    // Draw only "good" matches (i.e. whose distance is less than 2*min_dist )
+    vector< DMatch > good_matches;
+    
+    for (int k = 0; k < descriptors_object.rows; k++) {
+        if (matches[k].distance <= 2 * min_dist ) {
+            goodMatches.push_back(matches[k]);
+        }
+    }
+    
+    if (displayMatches == true) {
+        // Display matches
+        Mat img_matches;
+        drawMatches(image1, keypoints_object, image2, keypoints_scene,
+                    goodMatches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                    vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    
+        // Write matches to file
+        imwrite("/Users/nicolaslangley/Desktop/matches1.jpg", img_matches);
+    }
+    
+    vector<Point2f> obj;
+    vector<Point2f> scene;
+    
+    for( int i = 0; i < goodMatches.size(); i++ ) {
+        obj.push_back( keypoints_object[ goodMatches[i].queryIdx ].pt );
+        scene.push_back( keypoints_scene[ goodMatches[i].trainIdx ].pt );
+    }
+    
+    // Find the Homography Matrix
+    Mat H = findHomography( obj, scene, CV_RANSAC );
+    // Use the Homography Matrix to warp the images
+    Mat result;
+    warpPerspective(image1,result,H,cv::Size(image1.cols+image2.cols,image1.rows));
+    cv::Mat half(result,cv::Rect(0,0,image2.cols,image2.rows));
+    image2.copyTo(half);
+    
+    return result;
+}
+
+
+
+
+
 
