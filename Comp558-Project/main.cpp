@@ -194,9 +194,9 @@ int main(int argc, char* argv[]) {
         if (i < imageOrder.size() - 1) orderedHomographies.push_back(allHomographies.at(i).at(i+1));
     }
     
-    Mat pano;
+    Mat pano = imgs.at(0);
     for (int i = 0; i < orderedImgs.size() - 1; i++) {
-        pano = composeImages(imgs.at(i+1), imgs.at(i), false, false);
+        pano = composeImages(imgs.at(i+1), pano, false, false);
         imshow("Stitch", pano);
         imwrite(result_name, pano);
     }
